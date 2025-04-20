@@ -1,8 +1,7 @@
-from fastapi import FastAPI, HTTPException, Depends, Header, Query, Body
-from typing import List, Dict, Optional, Any
+from fastapi import FastAPI, HTTPException, Depends, Header
+from typing import List, Optional
 from pydantic import BaseModel
 from .store import RedisClient
-import pickle
 from uuid import uuid4
 
 from .session import Session
