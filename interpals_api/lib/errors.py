@@ -32,3 +32,6 @@ class APIAuthError(APIError):
 
 class APIRedirectError(APIError):
     pass
+
+class CronSyntaxParsingException(Exception):
+    pass

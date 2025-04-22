@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 import requests
 import aiohttp
 
-from .utils import find_csrf_token
+from ..utils import find_csrf_token
 from .errors import (NoCSRFTokenError, WrongUsernameOrPasswordError,
                      SessionError, TooManyLoginAttemptsError)
 from .cookie import Cookie

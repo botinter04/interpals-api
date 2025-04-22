@@ -7,8 +7,8 @@ import requests
 import aiohttp
 from bs4 import BeautifulSoup
 
-from .errors import *
-from .cookie import Cookie
+from .lib.errors import *
+from .lib.cookie import Cookie
 from .utils import find_csrf_token
 from .parsers.profile_parser import ProfileParser
 from .parsers.chat_parser import ChatParser

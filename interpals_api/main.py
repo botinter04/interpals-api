@@ -1,10 +1,11 @@
 from fastapi import FastAPI, HTTPException, Depends, Header
 from typing import List, Optional
 from pydantic import BaseModel
-from .store import RedisClient
+from .store.store import RedisClient
 from uuid import uuid4
+from enum import Enum
 
-from .session import Session
+from .lib.session import Session
 from .api import ApiAsync
 
 
@@ -53,6 +54,7 @@ async def get_api(x_auth_token: str = Header(..., alias="x-auth-token")) -> ApiA
 
 @app.post("/login")
 async def login(request: LoginRequest):
+    # I should encrypt the password with a key for security before pushing, frontend will send encrypted key which will be decrypted here.
     session = Session.login(request.username, request.password)
     api = ApiAsync(session)
     try:
