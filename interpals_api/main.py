@@ -3,10 +3,9 @@ from typing import List, Optional
 from pydantic import BaseModel
 from .store.store import RedisClient
 from uuid import uuid4
-from enum import Enum
-
 from .lib.session import Session
 from .api import ApiAsync
+from .lib.constants import CountryCode, ContinentCode, Genders, SortOptions
 
 
 SESSION_EXPIRE_TIME = 7200  # todo- find out how long interpal's sessions typically last and ajust this value accordingly
@@ -21,13 +20,15 @@ class LoginRequest(BaseModel):
 class SearchOptions(BaseModel):
     age1: Optional[str] = "16"
     age2: Optional[str] = "110"
-    sex: Optional[List[str]] = ["male", "female"]
-    continents: Optional[List[str]] = ["AF", "AS", "EU", "NA", "OC", "SA"]
-    countries: Optional[List[str]] = ["---"]
+    sex: Optional[List[Genders]] = ["male", "female"]
+    continents: Optional[List[ContinentCode]] = ["AF", "AS", "EU", "NA", "OC", "SA"]
+    countries: Optional[List[CountryCode]] = ["---"]
     keywords: Optional[str] = ""
     online: Optional[bool] = False
+    photo: Optional[bool] = False
     city: Optional[str] = None
     cityName: Optional[str] = None
+    sort: SortOptions = SortOptions.NEWEST_FIRST
     limit: Optional[int] = 1000
     timeout: Optional[float] = 0.0
 
