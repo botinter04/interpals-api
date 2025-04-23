@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 from .job.job_configurations import REDIS_JOB_BASE_KEY, SearchOptions, JobConfigRequest
 from .store.store import redis_client
-from .job.job_configurations import add_cron_job, count_cron_jobs, get_cron_jobs
+from .job.job_configurations import add_cron_job, get_cron_jobs
 from uuid import uuid4
 from .lib.session import Session
 from .api import ApiAsync
