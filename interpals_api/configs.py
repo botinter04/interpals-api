@@ -4,6 +4,6 @@ import os
 load_dotenv() 
 
 class Config:
-    DB_URL = os.getenv("DATABASE_URL")
-    API_KEY = os.getenv("API_KEY")
-    DEBUG = os.getenv("DEBUG", "False") == "True"
+    REDIS_HOST = os.getenv("REDIS_HOST")
+    REDIS_PORT = os.getenv("PORT")
+    REDIS_PASSWORD = os.getenv("PASSWORD")
