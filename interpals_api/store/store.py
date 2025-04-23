@@ -49,3 +49,45 @@ class RedisClient:
             print(f"failed to delete key from redis: {e}")
             return False
 
+    def count_keys_with_prefix(self, prefix: str) -> int:
+        """
+        Count the number of keys in Redis that start with a specific prefix using SCAN.
+        """
+        try:
+            count = 0
+            cursor = 0
+            pattern = f"{prefix}*"
+            while True:
+                cursor, keys = self.client.scan(cursor=cursor, match=pattern, count=100)
+                count += len(keys)
+                if cursor == 0:
+                    break
+            return count
+        except redis.RedisError as e:
+            print(f"Failed to count keys with prefix '{prefix}': {e}")
+            return 0
+        
+    def get_values_with_prefix(self, prefix: str) -> list:
+        """
+        Returns a list of all values from Redis where keys start with the given prefix.
+        """
+        try:
+            values = []
+            cursor = 0
+            pattern = f"{prefix}*"
+            while True:
+                cursor, keys = self.client.scan(cursor=cursor, match=pattern, count=100)
+                for key in keys:
+                    value = self.get(key)
+                    if value is not None:
+                        values.append(json.loads(value))
+                if cursor == 0:
+                    break
+            return values
+        except redis.RedisError as e:
+            print(f"Failed to get values with prefix '{prefix}': {e}")
+            return []
+
+
+
+redis_client = RedisClient()
