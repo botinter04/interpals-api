@@ -4,7 +4,7 @@ from typing import Optional, Any
 
 
 class RedisClient:
-    def __init__(self, host: str = 'localhost', port: int = 6379, db: int = 0, password: Optional[str] = None):
+    def __init__(self, host: str = 'localhost', port: int = 6379, password: Optional[str] = None, db: int = 0):
         try:
             self.client = redis.Redis(host=host, port=port, db=db, password=password, decode_responses=True)
             self.client.ping()
@@ -89,5 +89,6 @@ class RedisClient:
             return []
 
 
+from configs import Config
 
-redis_client = RedisClient()
+redis_client = RedisClient(Config.REDIS_HOST, Config.REDIS_PORT, Config.REDIS_PASSWORD)
