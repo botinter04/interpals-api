@@ -253,6 +253,9 @@ class Api:
 
         if options.get('online'):
             params['online'] = '1'
+            
+        if options.get('photo'):
+            params['photo'] = '1'
 
         if options.get('cityName'):
             citycode = options.get('city')
