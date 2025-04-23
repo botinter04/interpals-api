@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, Header
 from typing import Optional
 from pydantic import BaseModel
-from .job.job_configurations import SearchOptions, JobConfigRequest
+from .job.job_configurations import REDIS_JOB_BASE_KEY, SearchOptions, JobConfigRequest
 from .store.store import redis_client
 from .job.job_configurations import add_cron_job, count_cron_jobs, get_cron_jobs
 from uuid import uuid4
@@ -198,30 +198,26 @@ async def get_pictures(uid: str, aid: str, api: ApiAsync = Depends(get_api)):
         raise HTTPException(status_code=500, detail=f"Error getting pictures: {str(e)}")
 
 @app.post("/job")
-async def add_job(request: JobConfigRequest, api: ApiAsync = Depends(get_api)):
-    try:
-        name = await add_cron_job(request)
-        return {"message": "Job added successfully", "job_name": name}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting pictures: {str(e)}")
-    
-@app.get("/job")
-async def get_jobs(request: JobConfigRequest, api: ApiAsync = Depends(get_api)):
-    try:
-        job_list = await get_cron_jobs()
-        return {"message": "Jobs fetched successfully", "job_list": job_list}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting pictures: {str(e)}")
-    
-@app.delete("/job")
-async def add_job(request: JobConfigRequest, api: ApiAsync = Depends(get_api)):
-    try:
-        name = await add_cron_job(request)
-        return {"message": "Job added successfully", "job_name": name}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting pictures: {str(e)}")
+async def create_job(request: JobConfigRequest, _: ApiAsync = Depends(get_api)):
+    name = await add_cron_job(request)
+    return {"message": "Job added successfully", "job_name": name}
 
-@app.get("/logout")
+
+@app.get("/job")
+async def list_jobs(_: ApiAsync = Depends(get_api)):
+    job_list = await get_cron_jobs()
+    return {"message": "Jobs fetched successfully", "job_list": job_list}
+
+@app.delete("/job/{job_name}")
+async def delete_job(job_name: str, _: ApiAsync = Depends(get_api)):
+    try:
+        redis_client.delete(f"{REDIS_JOB_BASE_KEY}:{job_name}")
+        return {"message": f"Job '{job_name}' deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete job: {str(e)}")
+
+
+@app.post("/logout")
 async def logout(x_auth_token: str = Header(..., alias="x-auth-token")):
     try:
         redis_client.delete(x_auth_token)
