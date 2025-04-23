@@ -1,36 +1,21 @@
 from fastapi import FastAPI, HTTPException, Depends, Header
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel
-from .store.store import RedisClient
+from .job.job_configurations import SearchOptions, JobConfigRequest
+from .store.store import redis_client
+from .job.job_configurations import add_cron_job, count_cron_jobs, get_cron_jobs
 from uuid import uuid4
 from .lib.session import Session
 from .api import ApiAsync
-from .lib.constants import CountryCode, ContinentCode, Genders, SortOptions
-
 
 SESSION_EXPIRE_TIME = 7200  # todo- find out how long interpal's sessions typically last and ajust this value accordingly
 
-redis_client = RedisClient()
+
 app = FastAPI(title="Interpals API", description="API for Interpals social network")
 
 class LoginRequest(BaseModel):
     username: str
     password: str
-
-class SearchOptions(BaseModel):
-    age1: Optional[str] = "16"
-    age2: Optional[str] = "110"
-    sex: Optional[List[Genders]] = ["male", "female"]
-    continents: Optional[List[ContinentCode]] = ["AF", "AS", "EU", "NA", "OC", "SA"]
-    countries: Optional[List[CountryCode]] = ["---"]
-    keywords: Optional[str] = ""
-    online: Optional[bool] = False
-    photo: Optional[bool] = False
-    city: Optional[str] = None
-    cityName: Optional[str] = None
-    sort: SortOptions = SortOptions.NEWEST_FIRST
-    limit: Optional[int] = 1000
-    timeout: Optional[float] = 0.0
 
 class MessageRequest(BaseModel):
     thread_id: str
@@ -209,6 +194,30 @@ async def get_pictures(uid: str, aid: str, api: ApiAsync = Depends(get_api)):
     try:
         pictures = await api.pictures(uid, aid)
         return {"pictures": pictures}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting pictures: {str(e)}")
+
+@app.post("/job")
+async def add_job(request: JobConfigRequest, api: ApiAsync = Depends(get_api)):
+    try:
+        name = await add_cron_job(request)
+        return {"message": "Job added successfully", "job_name": name}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting pictures: {str(e)}")
+    
+@app.get("/job")
+async def get_jobs(request: JobConfigRequest, api: ApiAsync = Depends(get_api)):
+    try:
+        job_list = await get_cron_jobs()
+        return {"message": "Jobs fetched successfully", "job_list": job_list}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting pictures: {str(e)}")
+    
+@app.delete("/job")
+async def add_job(request: JobConfigRequest, api: ApiAsync = Depends(get_api)):
+    try:
+        name = await add_cron_job(request)
+        return {"message": "Job added successfully", "job_name": name}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting pictures: {str(e)}")
 
