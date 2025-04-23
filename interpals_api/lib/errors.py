@@ -35,3 +35,6 @@ class APIRedirectError(APIError):
 
 class CronSyntaxParsingException(Exception):
     pass
+
+class ExistingKeyException(Exception):
+    pass
