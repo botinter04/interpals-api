@@ -1,7 +1,7 @@
 
 from typing import List
 from pydantic import ValidationError
-from .validate import is_valid_hour, is_valid_minute, validate_days, validate_search_ages, validate_countries, validate_continents, validate_sex_options
+from .validate import is_valid_hour, is_valid_minute, convert_day_list_to_index, validate_search_ages, validate_countries, validate_continents, validate_sex_options
 from ..lib.constants import SortOptions
 from ..lib.errors import CronSyntaxParsingException
 from .models import SearchOptions
@@ -23,7 +23,7 @@ def parse_cron_from_date(minute: int, hour: int, days: List[str]) -> str:
     if not is_valid_hour(hour):
         raise CronSyntaxParsingException(f"Invalid hour: {hour}. Must be between 0 and 23.")
     
-    days_index_list = validate_days(days)
+    days_index_list = convert_day_list_to_index(days)
     if not days_index_list:
         raise CronSyntaxParsingException(f"Invalid or empty days list: {days}. Must contain valid day names.")
     

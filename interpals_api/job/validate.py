@@ -2,6 +2,16 @@ from typing import List, Optional
 from ..lib.constants import Genders, ContinentCode, CountryCode
 from ..utils import validate_enum_list
 
+days_map = {
+        'sun': 0,
+        'mon': 1,
+        'tue': 2,
+        'wed': 3,
+        'thu': 4,
+        'fri': 5,
+        'sat': 6
+}
+
 def validate_search_ages(age1: Optional[int], age2: Optional[int]):
     age1 = age1 if age1 is not None else 16
     age2 = age2 if age2 is not None else 120
@@ -16,6 +26,17 @@ def is_valid_minute(min_val: int) -> bool:
 
 def is_valid_hour(hour: int) -> bool:
     return 0 <= hour <= 23
+
+def convert_day_list_to_index(days: List[str]) -> List[int]:
+    if not days:
+        return []
+
+    valid_days_index = []
+    for day in days:
+        day_lower = day.lower()       
+        if day_lower in days_map:
+            valid_days_index.append(days_map[day_lower])
+    return valid_days_index
 
 def validate_days(days: List[str]) -> List[int]:
     if not days:
@@ -33,10 +54,9 @@ def validate_days(days: List[str]) -> List[int]:
 
     valid_days = []
     for day in days:
-        day_lower = day.lower()
+        day_lower = day.lower()       
         if day_lower in days_map:
-            valid_days.append(days_map[day_lower])
-
+            valid_days.append(day_lower)
     return valid_days
 
 def validate_sex_options(sexes: Optional[List[str]]):
