@@ -9,7 +9,7 @@ import json
 
 
 
-REDIS_JOB_BASE_KEY = "config:job"
+REDIS_JOB_BASE_KEY = "job"
 
 async def add_cron_job(job: JobConfigRequest):
     job_name = f"{REDIS_JOB_BASE_KEY}:{job.job_name}"
@@ -24,7 +24,7 @@ async def add_cron_job(job: JobConfigRequest):
 
         job_dict = {
             "cron_time": parse_cron_from_date(job.min, job.hour, days),
-            "job_type": str(job.type),
+            "job_type": job.type.value,
             "data": job.data,
         }
         redis_client.set(job_name, json.dumps(job_dict))
