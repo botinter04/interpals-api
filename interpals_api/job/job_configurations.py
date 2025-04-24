@@ -2,11 +2,12 @@ from enum import Enum
 from typing import List, Optional
 from fastapi import HTTPException
 from pydantic import BaseModel
-from interpals_api.job.parsers import parse_and_validate_search_options, parse_cron_from_date
-from interpals_api.job.validators import validate_days
-from interpals_api.lib.constants import ContinentCode, CountryCode, Genders, SortOptions
-from interpals_api.store.store import redis_client
-from interpals_api.lib.errors import ExistingKeyException
+import parsers
+from .validate import validate_days
+from lib.constants import ContinentCode, CountryCode, Genders, SortOptions
+from store.store import redis_client
+from lib.errors import ExistingKeyException
+
 import json
 
 class JobType(Enum):
@@ -49,10 +50,10 @@ async def add_cron_job(job: JobConfigRequest):
         #todo: add other cron job validations - jobs must be spaced at least an hour apart, not more than a specified number daily
         days = validate_days(job.days)
         if job.type == JobType.SEARCH:
-            job.data = parse_and_validate_search_options(job.data)
+            job.data = parsers.parse_and_validate_search_options(job.data)
 
         job_dict = {
-            "cron_time": parse_cron_from_date(job.min, job.hour, days),
+            "cron_time": parsers.parse_cron_from_date(job.min, job.hour, days),
             "job_type": str(job.type),
             "data": job.data,
         }

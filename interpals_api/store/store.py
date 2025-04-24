@@ -91,4 +91,5 @@ class RedisClient:
 
 from configs import Config
 
-redis_client = RedisClient(Config.REDIS_HOST, Config.REDIS_PORT, Config.REDIS_PASSWORD)
+print(Config.REDIS_HOST, Config.REDIS_PASSWORD, Config.REDIS_PORT)
+redis_client = RedisClient(Config.REDIS_HOST, int(Config.REDIS_PORT))

@@ -7,13 +7,13 @@ import requests
 import aiohttp
 from bs4 import BeautifulSoup
 
-from .lib.errors import *
-from .lib.cookie import Cookie
-from .utils import find_csrf_token
-from .parsers.profile_parser import ProfileParser
-from .parsers.chat_parser import ChatParser
-from .parsers.friends_parser import FriendsParser
-from .parsers.pictures_parser import PicturesParser
+from lib.errors import *
+from lib.cookie import Cookie
+from utils import find_csrf_token
+from parsers.profile_parser import ProfileParser
+from parsers.chat_parser import ChatParser
+from parsers.friends_parser import FriendsParser
+from parsers.pictures_parser import PicturesParser
 
 
 class Api:

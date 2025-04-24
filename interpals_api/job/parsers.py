@@ -1,10 +1,10 @@
 
 from typing import List
 from pydantic import ValidationError
-from interpals_api.job.validators import is_valid_hour, is_valid_minute, validate_days, validate_search_ages, validate_countries, validate_continents, validate_sex_options
-from interpals_api.lib.constants import SortOptions
-from interpals_api.lib.errors import CronSyntaxParsingException
-from interpals_api.main import SearchOptions
+from .validate import is_valid_hour, is_valid_minute, validate_days, validate_search_ages, validate_countries, validate_continents, validate_sex_options
+from lib.constants import SortOptions
+from lib.errors import CronSyntaxParsingException
+from main import SearchOptions
 
 
 def parse_cron_from_date(minute: int, hour: int, days: List[str]) -> str:
