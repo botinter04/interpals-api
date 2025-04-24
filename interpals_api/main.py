@@ -1,11 +1,12 @@
 from fastapi import FastAPI, HTTPException, Depends, Header
 from typing import Optional
 from pydantic import BaseModel
-from job.job_configurations import REDIS_JOB_BASE_KEY, SearchOptions, JobConfigRequest, add_cron_job, get_cron_jobs
-from store.store import redis_client
+from .job.job_configurations import REDIS_JOB_BASE_KEY, JobConfigRequest, add_cron_job, get_cron_jobs
+from .job.models import SearchOptions
+from .store.store import redis_client
 from uuid import uuid4
-from lib.session import Session
-from api import ApiAsync
+from .lib.session import Session
+from .api import ApiAsync
 
 SESSION_EXPIRE_TIME = 7200  # todo- find out how long interpal's sessions typically last and ajust this value accordingly
 

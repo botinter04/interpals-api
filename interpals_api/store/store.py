@@ -1,6 +1,7 @@
 import redis
 import json
 from typing import Optional, Any
+from ..configs import Config
 
 
 class RedisClient:
@@ -88,8 +89,4 @@ class RedisClient:
             print(f"Failed to get values with prefix '{prefix}': {e}")
             return []
 
-
-from configs import Config
-
-print(Config.REDIS_HOST, Config.REDIS_PASSWORD, Config.REDIS_PORT)
 redis_client = RedisClient(Config.REDIS_HOST, int(Config.REDIS_PORT))

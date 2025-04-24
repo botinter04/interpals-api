@@ -2,9 +2,9 @@
 from typing import List
 from pydantic import ValidationError
 from .validate import is_valid_hour, is_valid_minute, validate_days, validate_search_ages, validate_countries, validate_continents, validate_sex_options
-from lib.constants import SortOptions
-from lib.errors import CronSyntaxParsingException
-from main import SearchOptions
+from ..lib.constants import SortOptions
+from ..lib.errors import CronSyntaxParsingException
+from .models import SearchOptions
 
 
 def parse_cron_from_date(minute: int, hour: int, days: List[str]) -> str:
@@ -32,7 +32,7 @@ def parse_cron_from_date(minute: int, hour: int, days: List[str]) -> str:
     return cron_syntax
 
 
-def parse_and_validate_search_options(options: dict) -> SearchOptions:
+def parse_and_validate_search_options(options: dict):
     params = {
             'sort': options.get('sort', SortOptions.LAST_LOGIN),
             'age1': options.get('age1', '16'),

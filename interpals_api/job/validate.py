@@ -1,6 +1,6 @@
 from typing import List, Optional
-from lib.constants import Genders, ContinentCode, CountryCode
-from utils import validate_enum_list
+from ..lib.constants import Genders, ContinentCode, CountryCode
+from ..utils import validate_enum_list
 
 def validate_search_ages(age1: Optional[int], age2: Optional[int]):
     age1 = age1 if age1 is not None else 16
