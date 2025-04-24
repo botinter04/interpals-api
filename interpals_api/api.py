@@ -7,8 +7,8 @@ import requests
 import aiohttp
 from bs4 import BeautifulSoup
 
-from .errors import *
-from .cookie import Cookie
+from .lib.errors import *
+from .lib.cookie import Cookie
 from .utils import find_csrf_token
 from .parsers.profile_parser import ProfileParser
 from .parsers.chat_parser import ChatParser
@@ -253,6 +253,9 @@ class Api:
 
         if options.get('online'):
             params['online'] = '1'
+
+        if options.get('photo'):
+            params['photo'] = '1'
 
         if options.get('cityName'):
             citycode = options.get('city')

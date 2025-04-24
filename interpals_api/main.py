@@ -1,34 +1,21 @@
 from fastapi import FastAPI, HTTPException, Depends, Header
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel
-from .store import RedisClient
+from .job.job_configurations import REDIS_JOB_BASE_KEY, JobConfigRequest, add_cron_job, get_cron_jobs
+from .job.models import SearchOptions
+from .store.store import redis_client
 from uuid import uuid4
-
-from .session import Session
+from .lib.session import Session
 from .api import ApiAsync
-
 
 SESSION_EXPIRE_TIME = 7200  # todo- find out how long interpal's sessions typically last and ajust this value accordingly
 
-redis_client = RedisClient()
+
 app = FastAPI(title="Interpals API", description="API for Interpals social network")
 
 class LoginRequest(BaseModel):
     username: str
     password: str
-
-class SearchOptions(BaseModel):
-    age1: Optional[str] = "16"
-    age2: Optional[str] = "110"
-    sex: Optional[List[str]] = ["male", "female"]
-    continents: Optional[List[str]] = ["AF", "AS", "EU", "NA", "OC", "SA"]
-    countries: Optional[List[str]] = ["---"]
-    keywords: Optional[str] = ""
-    online: Optional[bool] = False
-    city: Optional[str] = None
-    cityName: Optional[str] = None
-    limit: Optional[int] = 1000
-    timeout: Optional[float] = 0.0
 
 class MessageRequest(BaseModel):
     thread_id: str
@@ -53,6 +40,7 @@ async def get_api(x_auth_token: str = Header(..., alias="x-auth-token")) -> ApiA
 
 @app.post("/login")
 async def login(request: LoginRequest):
+    # I should encrypt the password with a key for security before pushing, frontend will send encrypted key which will be decrypted here.
     session = Session.login(request.username, request.password)
     api = ApiAsync(session)
     try:
@@ -209,7 +197,27 @@ async def get_pictures(uid: str, aid: str, api: ApiAsync = Depends(get_api)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting pictures: {str(e)}")
 
-@app.get("/logout")
+@app.post("/job")
+async def create_job(request: JobConfigRequest, _: ApiAsync = Depends(get_api)):
+    name = await add_cron_job(request)
+    return {"message": "Job added successfully", "job_name": name}
+
+
+@app.get("/job")
+async def list_jobs(_: ApiAsync = Depends(get_api)):
+    job_list = await get_cron_jobs()
+    return {"message": "Jobs fetched successfully", "job_list": job_list}
+
+@app.delete("/job/{job_name}")
+async def delete_job(job_name: str, _: ApiAsync = Depends(get_api)):
+    try:
+        redis_client.delete(f"{REDIS_JOB_BASE_KEY}:{job_name}")
+        return {"message": f"Job '{job_name}' deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete job: {str(e)}")
+
+
+@app.post("/logout")
 async def logout(x_auth_token: str = Header(..., alias="x-auth-token")):
     try:
         redis_client.delete(x_auth_token)
