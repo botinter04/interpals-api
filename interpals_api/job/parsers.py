@@ -33,6 +33,7 @@ def parse_cron_from_date(minute: int, hour: int, days: List[str]) -> str:
 
 
 def parse_and_validate_search_options(options: dict):
+    #todo add more safeguards
     params = {
             'sort': options.get('sort', SortOptions.LAST_LOGIN),
             'age1': options.get('age1', '16'),

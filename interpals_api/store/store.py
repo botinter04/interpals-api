@@ -81,7 +81,7 @@ class RedisClient:
                 for key in keys:
                     value = self.get(key)
                     if value is not None:
-                        values.append(json.loads(value))
+                        values.append({"key": key, "data": json.loads(value)})
                 if cursor == 0:
                     break
             return values
