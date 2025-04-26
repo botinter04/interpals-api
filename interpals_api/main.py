@@ -88,7 +88,6 @@ async def search(options: SearchOptions, api: ApiAsync = Depends(get_api)):
         limit = options_dict.pop("limit", 1000)
         timeout = options_dict.pop("timeout", 0.0)
         
-        # Search is an async generator, so we need to collect results
         results = []
         async for user in api.search(options_dict, limit=limit, timeout=timeout):
             results.append(user)
