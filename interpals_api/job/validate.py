@@ -1,4 +1,5 @@
-from typing import List, Optional
+from typing import List, Optional, Any, Type
+from enum import Enum
 from ..lib.constants import Genders, ContinentCode, CountryCode
 from ..utils import validate_enum_list
 

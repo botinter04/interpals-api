@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Union, List, Type
+from typing import Optional, Union, List, Type, Any
 from enum import Enum
 
 re_csfr_token = re.compile(r'<meta name="csrf_token" content="(.*?)"')
@@ -30,3 +30,10 @@ def validate_enum_list(
             raise ValueError(f"Invalid {value_name}: {val}. Must be one of {valid_values}")
     
     return values
+
+def validate_enum_value(value: Any, enum_class: Type[Enum]):
+    try:
+        return enum_class(value).value
+    except ValueError:
+        valid_values = [e.value for e in enum_class]
+        raise ValueError(f"Invalid value '{value}'. Allowed values: {valid_values}")

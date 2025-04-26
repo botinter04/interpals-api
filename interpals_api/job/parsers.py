@@ -1,10 +1,11 @@
 
-from typing import List
+from typing import List, Union
 from pydantic import ValidationError
 from .validate import is_valid_hour, is_valid_minute, convert_day_list_to_index, validate_search_ages, validate_countries, validate_continents, validate_sex_options
 from ..lib.constants import SortOptions
 from ..lib.errors import CronSyntaxParsingException
 from .models import SearchOptions
+from ..utils import validate_enum_value
 
 
 def parse_cron_from_date(minute: int, hour: int, days: List[str]) -> str:
@@ -32,34 +33,41 @@ def parse_cron_from_date(minute: int, hour: int, days: List[str]) -> str:
     return cron_syntax
 
 
-def parse_and_validate_search_options(options: dict):
-    #todo add more safeguards
-    params = {
-            'sort': options.get('sort', SortOptions.LAST_LOGIN),
-            'age1': options.get('age1', '16'),
-            'age2': options.get('age2', '110'),
-            'sex': options.get('sex', ['male', 'female']),
-            'continents': options.get('continents', ['AF', 'AS', 'EU', 'NA', 'OC', 'SA']),
-            'countries': options.get('countries', ['---']),
-            'keywords': options.get('keywords', ''),
-        }
-      
-    if options.get('online'):
-            params['online'] = '1'
+def parse_and_validate_search_options(options: Union[dict, None]) -> SearchOptions:    
+    if not isinstance(options, dict):
+        raise ValueError("Search options must be a dictionary.")
 
-    if options.get('photo'):
-            params['photo'] = '1'
+    params = {
+        'sort': options.get('sort', SortOptions.LAST_LOGIN.value),
+        'age1': options.get('age1', '16'),
+        'age2': options.get('age2', '110'),
+        'sex': options.get('sex', ['male', 'female']),
+        'continents': options.get('continents', ['AF', 'AS', 'EU', 'NA', 'OC', 'SA']),
+        'countries': options.get('countries', ['---']),
+        'keywords': options.get('keywords', ''),
+        'city': options.get('city'),
+        'cityName': options.get('cityName'),
+        'limit': options.get('limit', 1000),
+        'timeout': options.get('timeout', 0.0),
+        'online': bool(options.get('online', False)),
+        'photo': bool(options.get('photo', False)),
+    }
+
     try:
         s_options = SearchOptions(**params)
+
+        s_options.sort = validate_enum_value(s_options.sort, SortOptions)
         s_options.sex = validate_sex_options(s_options.sex)
-        ages = validate_search_ages(s_options.age1, s_options.age2)
-        s_options.age1, s_options.age2 = ages[0], ages[1]
+        s_options.age1, s_options.age2 = validate_search_ages(s_options.age1, s_options.age2)
         s_options.continents = validate_continents(s_options.continents)
-        if s_options.countries == ['---']:
-            return s_options
-        s_options.countries = validate_countries(s_options.countries)
+
+        if s_options.countries != ['---']:
+            s_options.countries = validate_countries(s_options.countries)
+
         return s_options
-    
+
     except ValidationError as e:
-        raise ValueError(f"Search options validation failed: {str(e)}")
-    
+        raise ValueError(f"SearchOptions validation failed: {str(e)}")
+
+    except Exception as e:
+        raise ValueError(f"Custom validation error: {str(e)}")

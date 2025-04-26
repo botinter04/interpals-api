@@ -23,12 +23,12 @@ class SearchOptions(BaseModel):
     age2: Optional[str] = "110"
     sex: Optional[List[Genders]] = ["male", "female"]
     continents: Optional[List[ContinentCode]] = ["AF", "AS", "EU", "NA", "OC", "SA"]
-    countries: Optional[List[CountryCode]] = ["---"]
+    countries: Optional[List[CountryCode]] = []
     keywords: Optional[str] = ""
     online: Optional[bool] = False
     photo: Optional[bool] = False
     city: Optional[str] = None
     cityName: Optional[str] = None
-    sort: SortOptions = SortOptions.NEWEST_FIRST
+    sort: SortOptions = SortOptions.NEWEST_FIRST.value
     limit: Optional[int] = 1000
     timeout: Optional[float] = 0.0
