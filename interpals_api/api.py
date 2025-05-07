@@ -270,10 +270,64 @@ class Api:
     def _parse_search_result(self, body):
         users = []
         soup = BeautifulSoup(body, "lxml")
-        items = soup.find_all('div', class_='sResMain')
-        for item in items:
-            user = item.find('a').text
-            users.append(user)
+        results = soup.find_all('div', class_='sResInner')
+
+        for item in results:
+            try:
+                # Main section
+                main = item.find('div', class_='sResMain')
+                username_tag = main.find('b').find('a') if main else None
+                username = username_tag.text.strip() if username_tag else ''
+
+                # Gender
+                sex_img = item.find('img', class_='sResSex')
+                gender = 'Male' if sex_img and 'male' in sex_img['src'].lower() else 'Female' if sex_img and 'female' in sex_img['src'].lower() else 'Unknown'
+
+                # Location
+                location_city = ''
+                location_country = ''
+                location_links = main.find_all('a', href=True) if main else []
+
+                for tag in location_links:
+                    href = tag['href']
+                    if 'city=' in href:
+                        location_city = tag.text.strip()
+                    elif 'countries[]=' in href:
+                        location_country = tag.text.strip()
+
+                # Profile image
+                thumb = item.find('a', class_='sResThumb')
+                profile_img = thumb.find('img')['src'] if thumb and thumb.find('img') else ''
+
+                # Joined
+                joined_tag = item.find('div', class_='sResJoined')
+                joined = joined_tag.text.strip() if joined_tag else ''
+
+                # Status
+                status_tag = item.find('div', class_='sResLastOnline')
+                online_now = 'Online now' in status_tag.text if status_tag else False
+
+                # Description
+                description_tag = item.find('div', class_='sResMainTxt')
+                description_field = description_tag.find('div', class_='sResTxtField') if description_tag else None
+                description = description_field.text.strip() if description_field else ''
+
+                user_data = {
+                    'username': username,
+                    'gender': gender,
+                    'location_city': location_city,
+                    'location_country': location_country,
+                    'joined': joined,
+                    'online_now': online_now,
+                    'profile_image': profile_img,
+                    'description': description,
+                }
+
+                users.append(user_data)
+
+            except Exception as e:
+                print(f"Error parsing a user block: {e}")
+
         return users
 
     def _get_citycode(self, cityname):
