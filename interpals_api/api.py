@@ -6,6 +6,7 @@ from time import sleep
 import requests
 import aiohttp
 from bs4 import BeautifulSoup
+import re
 
 from .lib.errors import *
 from .lib.cookie import Cookie
@@ -267,6 +268,147 @@ class Api:
 
         return params
 
+    def _parse_profile(self, html: str) -> dict:
+        soup = BeautifulSoup(html, 'lxml')
+        profile = {}
+
+        # 1. Name and Age
+        header = soup.select_one('.profileBox h1')
+        profile['username'] = ''
+        profile['name'] = ''
+        profile['age'] = ''
+        if header:
+            profile['username'] = header.text.strip()  # Username, e.g., "Absonoplyanka"
+            
+            name_age_text_node = header.next_sibling
+            if name_age_text_node and isinstance(name_age_text_node, str):
+                name_age_text = name_age_text_node.strip()  # e.g., "Antoine,  28 y.o."
+                
+                parts = name_age_text.split(',', 1) # Split only on the first comma
+                if parts:
+                    profile['name'] = parts[0].strip() # Real name, e.g., "Antoine"
+                
+                age_match = re.search(r'(\d+)\s*y\.o\.', name_age_text)
+                if age_match:
+                    profile['age'] = age_match.group(1)  # e.g., "28"
+                elif len(parts) > 1: # Fallback if regex fails but comma split provided a second part
+                    age_candidate = parts[1].replace('y.o.', '').strip()
+                    age_digits_match = re.match(r'(\d+)', age_candidate)
+                    if age_digits_match:
+                        profile['age'] = age_digits_match.group(1)
+
+        # 2. Gender (based on the icon)
+        # This logic assumes only male icon is explicitly checked. If female icon exists, it's female.
+        # If neither, it defaults to 'Female'. This could be made more robust if specific female icon exists.
+        gender_icon = soup.select_one('.profileBox img[src*="male-14.png"]')
+        profile['gender'] = 'Male' if gender_icon else 'Female'
+
+        # 3. Locations
+        # Corrected to remove "[Current City]" and "[Hometown]" tags from the text.
+        location_elements = soup.select('.profLocation .profDataTopData')
+        if location_elements:
+            current_city_text_container = location_elements[0].select_one('div[style*="float: left"]')
+            if current_city_text_container:
+                # Create a temporary copy to manipulate for text extraction
+                temp_container = BeautifulSoup(str(current_city_text_container), 'lxml').div
+                span_tag = temp_container.select_one('span[style*="color: #ccc;"]')
+                if span_tag:
+                    span_tag.decompose() # Remove the "[Current City]" like span
+                profile['current_city'] = temp_container.get_text(separator=' ', strip=True).rstrip(',').strip()
+            else: # Fallback if inner div not found
+                 raw_text = location_elements[0].get_text(separator=' ', strip=True)
+                 profile['current_city'] = raw_text.replace('[Current City]', '').strip().rstrip(',')
+
+
+        if len(location_elements) > 1:
+            hometown_text_container = location_elements[1].select_one('div[style*="float: left"]')
+            if hometown_text_container:
+                temp_container = BeautifulSoup(str(hometown_text_container), 'lxml').div
+                span_tag = temp_container.select_one('span[style*="color: #ccc;"]')
+                if span_tag:
+                    span_tag.decompose() # Remove the "[Hometown]" like span
+                profile['hometown'] = temp_container.get_text(separator=' ', strip=True).rstrip(',').strip()
+            else: # Fallback
+                raw_text = location_elements[1].get_text(separator=' ', strip=True)
+                profile['hometown'] = raw_text.replace('[Hometown]', '').strip().rstrip(',')
+
+
+        # 4. Languages
+        # Revised to avoid CSS pseudo-selectors :has and :contains for broader compatibility & clarity.
+        def get_languages_revised(parent_selector_class, h3_text_to_find):
+            langs = []
+            possible_sections = soup.select(f'.{parent_selector_class}')
+            for section_candidate in possible_sections:
+                h3 = section_candidate.find('h3')
+                if h3 and h3_text_to_find.lower() in h3.text.lower():
+                    for lang_element in section_candidate.select('.profLang'):
+                        name_tag = lang_element.select_one('.prLangName')
+                        level_img = lang_element.select_one('.proflLevel')
+                        if name_tag:
+                            name = name_tag.get_text(strip=True).replace('\n', ' ')
+                            level = None
+                            if level_img and level_img.has_attr('src'):
+                                level_src = level_img['src']
+                                level = level_src.split('/')[-1].replace('.png', '')
+                            langs.append({'name': name, 'level': level})
+                    break # Found the correct section
+            return langs
+
+        profile['speaks'] = get_languages_revised('profDataTopField', 'Speaks')
+        profile['learning'] = get_languages_revised('profDataTopField', 'Learning')
+
+        # 5. Looking for
+        # Revised similarly to languages to avoid CSS pseudo-selectors.
+        looking_for_items = []
+        possible_lf_sections = soup.select('.profDataTopField')
+        for section_candidate in possible_lf_sections:
+            h3 = section_candidate.find('h3')
+            if h3 and "looking for" in h3.text.lower():
+                looking_for_tags = section_candidate.select('.lfor')
+                looking_for_items = [tag.text.strip() for tag in looking_for_tags]
+                break
+        profile['looking_for'] = looking_for_items
+
+        # 6. About / Requests / Hobbies etc.
+        # Corrected to reliably find sections by H2 text, removing the faulty icon-class based selector.
+        data_sections = {
+            'about': 'About',
+            'requests': 'Requests',
+            'hobbies': 'Hobbies & Interests', # Note: HTML has "Hobbies & Interests"
+            'music': 'Favorite Music',
+            'movies': 'Favorite Movies',
+            'tv_shows': 'Favorite TV Shows',
+            'books': 'Favorite Books',
+        }
+
+        for key, heading_text_to_find in data_sections.items():
+            section_h2 = None
+            h2_candidates = soup.select('.profDataBox h2') # Search H2s only within .profDataBox
+            for h2_candidate in h2_candidates:
+                # Extract text part of H2, which usually follows an <i> icon tag
+                icon_tag = h2_candidate.find('i')
+                actual_text_in_h2 = ""
+                if icon_tag and icon_tag.next_sibling and isinstance(icon_tag.next_sibling, str):
+                    actual_text_in_h2 = icon_tag.next_sibling.strip()
+                elif not icon_tag: # If no icon tag, use the full text
+                     actual_text_in_h2 = h2_candidate.text.strip()
+                
+                # Check if the found text matches the heading we are looking for
+                if actual_text_in_h2.lower() == heading_text_to_find.lower():
+                    section_h2 = h2_candidate
+                    break
+                elif not actual_text_in_h2 and heading_text_to_find.lower() in h2_candidate.text.lower():
+                    # Fallback: if direct text extraction failed but heading is in the h2's full text
+                    section_h2 = h2_candidate
+                    break
+
+
+            if section_h2:
+                box_text_div = section_h2.find_next_sibling('div', class_='profDataBoxText')
+                if box_text_div:
+                    profile[key] = box_text_div.get_text(separator=' ', strip=True)
+        return profile
+
     def _parse_search_result(self, body):
         users = []
         soup = BeautifulSoup(body, "lxml")
@@ -349,7 +491,9 @@ class ApiAsync(Api):
             return False
 
     async def view(self, user):
-        await self._request(user)
+        body = await self._request(user)
+        return self._parse_profile(body)
+        
 
     async def profile(self, user):
         html = await self._request(user)

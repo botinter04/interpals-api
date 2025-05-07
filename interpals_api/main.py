@@ -99,8 +99,8 @@ async def search(options: SearchOptions, api: ApiAsync = Depends(get_api)):
 @app.get("/view/{username}")
 async def view_profile(username: str, api: ApiAsync = Depends(get_api)):
     try:
-        await api.view(username)
-        return {"status": "success", "message": f"Viewed profile of {username}"}
+        data = await api.view(username)
+        return {"status": "success", "data": data, "message": f"Viewed profile of {username}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"View error: {str(e)}")
 
