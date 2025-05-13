@@ -21,7 +21,7 @@ setup(
         'requests>=2.31',
         'lxml>=4.9',
         'beautifulsoup4>=4.12',
-        'fastapi>=0.104.0',
+        'fastapi[standard]>=0.104.0',
         'pydantic>=2.4.0',
         'uvicorn>=0.23.0',
         'redis>=5.0.0',  

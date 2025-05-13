@@ -89,4 +89,5 @@ class RedisClient:
             print(f"Failed to get values with prefix '{prefix}': {e}")
             return []
 
-redis_client = RedisClient(Config.REDIS_HOST, int(Config.REDIS_PORT))
+redis_client = RedisClient(Config.REDIS_HOST, int(Config.REDIS_PORT), Config.REDIS_PASSWORD)
+# redis_client = RedisClient()

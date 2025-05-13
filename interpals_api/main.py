@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from pydantic import BaseModel
 from .job.job_configurations import REDIS_JOB_BASE_KEY, JobConfigRequest, add_cron_job, get_cron_jobs
@@ -9,9 +10,17 @@ from .lib.session import Session
 from .api import ApiAsync
 
 SESSION_EXPIRE_TIME = 7200  # todo- find out how long interpal's sessions typically last and ajust this value accordingly
-
-
 app = FastAPI(title="Interpals API", description="API for Interpals social network")
+
+origins = ['*']
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class LoginRequest(BaseModel):
     username: str
