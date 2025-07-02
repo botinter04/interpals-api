@@ -8,6 +8,7 @@ from ..lib.constants import ContinentCode, Genders, CountryCode, SortOptions
 class JobType(Enum):
     SEARCH = "search"
     CHAT = "chat"
+    SEARCH_AND_MESSAGE = "search_and_message"
 
 class JobConfigRequest(BaseModel): 
     job_name: str

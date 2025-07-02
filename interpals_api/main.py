@@ -12,7 +12,7 @@ from .api import ApiAsync
 SESSION_EXPIRE_TIME = 7200  # todo- find out how long interpal's sessions typically last and ajust this value accordingly
 app = FastAPI(title="Interpals API", description="API for Interpals social network")
 
-origins = ['*']
+origins = ['*', "http://localhost:5123"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,7 +43,7 @@ async def get_api(x_auth_token: str = Header(..., alias="x-auth-token")) -> ApiA
     if not data:
         raise HTTPException(status_code=401, detail="Not authenticated or session expired")
     
-    session = Session(data["username"], data["session_id"], data["csrf_cookie"])
+    session = Session(data["username"], data["session_id"], data["csrf_cookie"], data["__ubic1"])
     
     return ApiAsync(session)
 
@@ -56,7 +56,7 @@ async def login(request: LoginRequest):
         authenticated = await api.check_auth()
         if authenticated:
             token = str(uuid4())
-            session_credentials = {"username": session.username, "session_id": session.interpals_sessid, "csrf_cookie": session.csrf_cookieV2}
+            session_credentials = {"username": session.username, "session_id": session.interpals_sessid, "csrf_cookie": session.csrf_cookieV2, "__ubic1": session._ubic1}
             redis_client.set(
                 f"session:{token}", 
                 (session_credentials),
@@ -71,6 +71,7 @@ async def login(request: LoginRequest):
         else:
             raise HTTPException(status_code=401, detail="Authentication failed")
     except Exception as e:
+        print(f"Error during login: {e}")
         raise HTTPException(status_code=500, detail=f"Login error: {str(e)}")
 
 @app.get("/profile/{username}")
@@ -92,7 +93,6 @@ async def get_visitors(api: ApiAsync = Depends(get_api)):
 @app.post("/search")
 async def search(options: SearchOptions, api: ApiAsync = Depends(get_api)):
     try:
-        # Convert to dict for the API
         options_dict = options.model_dump(exclude_none=True)
         limit = options_dict.pop("limit", 1000)
         timeout = options_dict.pop("timeout", 0.0)
@@ -204,26 +204,6 @@ async def get_pictures(uid: str, aid: str, api: ApiAsync = Depends(get_api)):
         return {"pictures": pictures}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting pictures: {str(e)}")
-
-@app.post("/job")
-async def create_job(request: JobConfigRequest, _: ApiAsync = Depends(get_api)):
-    name = await add_cron_job(request)
-    return {"message": "Job added successfully", "job_name": name}
-
-
-@app.get("/job")
-async def list_jobs(_: ApiAsync = Depends(get_api)):
-    job_list = await get_cron_jobs()
-    return {"message": "Jobs fetched successfully", "job_list": job_list}
-
-@app.delete("/job/{job_name}")
-async def delete_job(job_name: str, _: ApiAsync = Depends(get_api)):
-    try:
-        redis_client.delete(f"{REDIS_JOB_BASE_KEY}:{job_name}")
-        return {"message": f"Job '{job_name}' deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete job: {str(e)}")
-
 
 @app.post("/logout")
 async def logout(x_auth_token: str = Header(..., alias="x-auth-token")):

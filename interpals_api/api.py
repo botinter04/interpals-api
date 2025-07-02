@@ -231,7 +231,7 @@ class Api:
         return headers
 
     def _check_body_for_auth(self, body):
-        return "/app/auth/logout" in body
+        return "You are currently logged in" in body or "Not you?" in body
 
     def _prepare_search_params(self, options):
         params = {

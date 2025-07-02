@@ -11,20 +11,23 @@ from .cookie import Cookie
 
 
 class Session:
-    def __init__(self, username, interpals_sessid, csrf_cookieV2):
+    def __init__(self, username, interpals_sessid, csrf_cookieV2, _ubic1):
         self.username = username
         self.interpals_sessid = interpals_sessid
         self.csrf_cookieV2 = csrf_cookieV2
+        self._ubic1 = _ubic1
 
     def __repr__(self):
         return f"Session(username={self.username}, " \
                f"interpals_sessid={self.interpals_sessid}, " \
-               f"csrf_cookieV2={self.csrf_cookieV2})"
+               f"csrf_cookieV2={self.csrf_cookieV2}), " \
+               f"__ubic1={self._ubic1}",
 
     def cookie(self):
         return {
             'interpals_sessid': self.interpals_sessid,
-            'csrf_cookieV2': self.csrf_cookieV2
+            'csrf_cookieV2': self.csrf_cookieV2,
+            '__ubic1': self._ubic1,
         }
 
     def dump(self, f):
@@ -32,6 +35,7 @@ class Session:
             'username': self.username,
             'interpals_sessid': self.interpals_sessid,
             'csrf_cookieV2': self.csrf_cookieV2,
+            '__ubic1': self._ubic1,
         }
         json.dump(kwargs, f)
 
@@ -54,7 +58,7 @@ class Session:
         # Create and return session instance
         return cls(username=username,
                    interpals_sessid=cookie['interpals_sessid'],
-                   csrf_cookieV2=cookie['csrf_cookieV2'])
+                   csrf_cookieV2=cookie['csrf_cookieV2'],_ubic1=cookie['__ubic1'])
 
     @classmethod
     def _request_initial_page(cls, cookie):
